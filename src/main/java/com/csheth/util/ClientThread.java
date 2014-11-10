@@ -16,7 +16,7 @@ public class ClientThread implements Runnable {
 			
 			// Generate votes and add to queue
 			for (int i = 0; i < 2; i++) {
-				String msg = (int)Math.ceil(Math.random() * 100) + ":1";
+				String msg = String.valueOf((int)Math.ceil(Math.random() * 100));
 				System.out.println("Produced: " + msg);
 				sharedQueue.put(msg);
 			}
