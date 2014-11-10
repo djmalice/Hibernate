@@ -3,13 +3,19 @@ package com.csheth;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
 import com.csheth.model.Player;
+import com.csheth.util.ClientThread;
 import com.csheth.util.HibernateUtil;
+import com.csheth.util.ServerThread;
 
 public class App {
 
@@ -45,11 +51,24 @@ public class App {
 		
 		
 		/*Add votes to the database table*/
+		BlockingQueue<String> queue = new ArrayBlockingQueue<String>(10);
+	
+		/* Generate 10 client threads */
+        ExecutorService clientExecutor = Executors.newFixedThreadPool(12);
 		
+		for (int i = 0; i < 10; i++) {
+			Runnable worker = new ClientThread(queue);
+			clientExecutor.execute(worker);
+		}
+				
+		System.out.println("\nFinished all client threads");
 		
-		
-		
-		
+		for (int i = 0; i < 2; i++) {
+			
+			Runnable worker = new ServerThread(queue);
+			clientExecutor.execute(worker);
+		}
+		clientExecutor.shutdown();
 		
 		
 		
