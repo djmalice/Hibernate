@@ -1,5 +1,6 @@
 package com.csheth.util;
 
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 import org.hibernate.Session;
@@ -29,6 +30,11 @@ public class ServerThread implements Runnable {
 				        .setInteger( "id", Integer.parseInt(msg))
 				        .executeUpdate();
 				tx.commit();
+				
+				tx = session.beginTransaction();
+				List<Integer> top5 = session.createSQLQuery("select player_id from player order by votes DESC limit 5").list();
+				tx.commit();
+				System.out.println(top5);
 				session.close();
 				
 			} catch (InterruptedException ex) {
