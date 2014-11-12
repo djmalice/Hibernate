@@ -1,12 +1,14 @@
 package com.csheth.util;
 
-import java.util.concurrent.BlockingQueue;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 public class ClientThread implements Runnable {
-		private final BlockingQueue<String> sharedQueue;
+		private final ExecutorService serverPool;
  
-		public ClientThread(BlockingQueue<String> sharedQueue) {
-			this.sharedQueue = sharedQueue;
+		public ClientThread(ExecutorService serverPool) {
+			this.serverPool = serverPool;
 		}
  
 		@Override
@@ -18,9 +20,10 @@ public class ClientThread implements Runnable {
 			for (int i = 0; i < 1000; i++) {
 				String msg = String.valueOf((int)Math.ceil(Math.random() * 100));
 				System.out.println("Produced: " + msg);
-				sharedQueue.put(msg);
+				Future<List<Integer>> future1=serverPool.submit(new ServerThread(msg));
+				System.out.println(future1.get());
 			}
-		} catch (InterruptedException ex) {
+		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
 

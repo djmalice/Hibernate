@@ -3,8 +3,6 @@ package com.csheth;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
@@ -15,7 +13,6 @@ import org.hibernate.Transaction;
 import com.csheth.model.Player;
 import com.csheth.util.ClientThread;
 import com.csheth.util.HibernateUtil;
-import com.csheth.util.ServerThread;
 
 public class App {
 
@@ -25,13 +22,13 @@ public class App {
 	public static void main(String[] args) {
 		Session session = HibernateUtil.getSessionFactory()
 				.openSession();
-		
+		Transaction tx = session.beginTransaction();
 		
 		/*Seed database with player id, player name and positions*/
 		try {
 			Scanner S= new Scanner(new File("/Users/chintan/Codejam/Glint/GlintTest/src/main/resources/seed_table.txt"));
 			S.useDelimiter(Pattern.compile("\\n"));
-			Transaction tx = session.beginTransaction();
+			
 			for ( int i=0; i<100; i++ ) {
 				String elements[] = S.next().split(" ");
 			    Player player = new Player(Integer.parseInt(elements[0]),elements[1],Integer.parseInt(elements[2]));
@@ -44,30 +41,29 @@ public class App {
 			}
 
 			tx.commit();
+			session.close();
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
+			tx.rollback();
+			session.close();
 			e.printStackTrace();
 		}		
 		
 		
-		/*Add votes to the database table*/
-		BlockingQueue<String> queue = new ArrayBlockingQueue<String>(10);
+		
 	
 		/* Generate 10 client threads */
         ExecutorService clientExecutor = Executors.newFixedThreadPool(12);
 		
+        /* Generate 2 server threads */
+        ExecutorService serverExecutor = Executors.newFixedThreadPool(2);
+        
 		for (int i = 0; i < 10; i++) {
-			Runnable worker = new ClientThread(queue);
+			Runnable worker = new ClientThread(serverExecutor);
 			clientExecutor.execute(worker);
 		}
 				
-		System.out.println("\nFinished all client threads");
 		
-		for (int i = 0; i < 2; i++) {
-			
-			Runnable worker = new ServerThread(queue);
-			clientExecutor.execute(worker);
-		}
 		clientExecutor.shutdown();
 		
 		
@@ -79,7 +75,6 @@ public class App {
 		
 		
 		
-		session.close();
 		
 	}
 
